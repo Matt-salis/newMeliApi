@@ -1,0 +1,36 @@
+@import './base.css';
+
+#app {
+  margin: 0 auto;
+  font-weight: bold;
+  font-size: large;
+
+}
+
+.inline {
+  padding: 1rem;
+  width: 100%;
+  background-color: rgb(255, 240, 37);
+  display: inline-flex !important;
+  /* justify-content: space-around; */
+  flex-direction: row;
+  gap: 5px;
+}
+
+.nodeco { 
+  text-decoration: none; 
+  color: rgb(0, 0, 0); }
+
+a,
+.green {
+  text-decoration: none;
+  color: rgb(0, 0, 0);
+  transition: 0.4s;
+  margin-left: 15px;
+}
+
+@media (hover: hover) {
+  a:hover {
+    background-color: hsla(54, 100%, 40%, 0.2);
+  }
+}
