@@ -153,9 +153,9 @@ export default defineComponent({
         }).then((res) => {
           var total = res.paging.total
           var max = Math.ceil(total / 50) - 1 
-          if (max >= 20) {
-            max = 19
-          }
+          // if (max >= 20) {
+          //   max = 19
+          // }
           this.results = res.results
           this.resultsOG = this.results
 

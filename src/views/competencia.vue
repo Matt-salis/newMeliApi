@@ -59,6 +59,7 @@
         </table>
         <p>Las cantidades de items vendidos y disponibles son aproximaciones</p>
       </div>
+      <p v-if="results.length == 0">Realize una busqueda</p>
       <p v-if="results.length == 0">No hay registro de cambios</p>
       <button v-else @click="exportXlsx()">Exportar xlsx</button>
         <!-- <div class="flex-inline-left" style="margin-top: 15px; margin-bottom: 5px;">
@@ -162,6 +163,7 @@
       competencia: [],
       code: '',
       results: [],
+      resultsOG: [],
       scrollId: '',
       fecha: '',
       diasFiltro: 1,
@@ -192,7 +194,7 @@
         //   var filtros = this.queryFiltros();
           this.tablaFormateada = []
           this.token = window.localStorage.getItem('token')
-          this.queryBusquedaOG = this.queryBusqueda
+          // this.queryBusquedaOG = this.queryBusqueda
         //   var query = this.queryBusqueda.replaceAll(' ', '%20')
           $.ajax({
             type: "GET",
@@ -201,10 +203,10 @@
             }).then((res) => {
                 var total = res.paging.total
                 var max = Math.ceil(total / 50) - 1 
-                if (max >= 20) {
-                max = 19
-                }
-                this.results = res.results
+                // if (max >= 20) {
+                // max = 19
+                // }
+                this.resultsOG = res.results
 
                 if (total > 50) {
                     for (var i = 1; i <= max; i++) {
@@ -252,7 +254,7 @@
               }).then((ans) => {
                 console.log(ans.results)
                 if (ans.results.length > 0) {
-                  this.results.push(...ans.results)
+                  this.resultsOG.push(...ans.results)
                   this.applyFilters()
                 }
                 // this.resultsOG = this.results
@@ -297,8 +299,9 @@
 
         applyFilters() {
             if(this.diasFiltro < 1) {this.diasFiltro = 1}
-            this.results = this.results.filter(x => {
+            this.results = this.resultsOG.filter(x => {
                 var lastUpdated = new Date(x.prices.prices[0].last_updated)
+                lastUpdated.setHours(0,0,0,0)
                 return lastUpdated >= this.filterDate
               })
         },
@@ -371,6 +374,7 @@
         filterDate() {
             var filtroDate = new Date()
             filtroDate.setDate(this.fecha.getDate() - this.diasFiltro)
+            filtroDate.setHours(0,0,0,0)
             return filtroDate
         }
       }
