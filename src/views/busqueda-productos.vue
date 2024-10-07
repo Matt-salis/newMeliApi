@@ -203,8 +203,8 @@ export default defineComponent({
             precio: x.price,
             disponibles: x.available_quantity,
             vendidos: x.sold_quantity,
-            cuotas: x.installments != null ? x.installments.quantity : '-',
-            intereses: x.installments.rate != null ? x.installments.rate : '-',
+            cuotas: x.installments?.quantity ?? '-',
+            intereses: x.installments?.rate ?? '-',
             envio: x.shipping.free_shipping
           }
           if (x.installments == null) {

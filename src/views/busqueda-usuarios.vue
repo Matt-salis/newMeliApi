@@ -21,7 +21,7 @@
           <p style="font-size: large;">Nombre de usuario</p>
           <p>{{results.seller.nickname}}</p>
         </div>
-        <div class="border">
+        <!-- <div class="border">
           <p style="font-size: large;">Link al perfil</p>
           <p><a target="_blank" :href='results.seller.permalink'>{{results.seller.permalink}}</a></p>
         </div>
@@ -36,13 +36,13 @@
         <div class="border">
           <p style="font-size: large;">Transacciones totales</p>
           <p>{{results.seller.seller_reputation.transactions.total}}</p>
-        </div>
+        </div> -->
       </div>
 
 
 
       <div v-if="results.seller != null" class="flex-inline-between mt-10">
-        <div class="border">
+        <!-- <div class="border">
           <p style="font-size: large;">Transacciones canceladas</p>
           <p>{{results.seller.seller_reputation.transactions.canceled}}</p>
         </div>
@@ -61,7 +61,7 @@
         <div class="border">
           <p style="font-size: large;">Publicaciones activas</p>
           <p>{{results.paging.total}}</p>
-        </div>
+        </div> -->
       </div>
 
 

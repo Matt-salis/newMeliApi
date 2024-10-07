@@ -46,7 +46,7 @@
               <td><img style="max-width: 100px; max-height: 100px;" :src='result.thumbnail' alt="logo"></td>
               <td>{{result.title}}</td>
               <td><a :href='result.permalink'>{{result.permalink}}</a></td>
-              <td>{{formatFecha(new Date(result.prices.prices[0].last_updated))}}</td>
+              <!-- <td>{{formatFecha(new Date(result.prices.prices[0].last_updated))}}</td> -->
               <td>{{result.seller.nickname}}</td>
               <td>{{result.price}}</td>
               <td>{{result.available_quantity}}</td>
@@ -299,11 +299,12 @@
 
         applyFilters() {
             if(this.diasFiltro < 1) {this.diasFiltro = 1}
-            this.results = this.resultsOG.filter(x => {
-                var lastUpdated = new Date(x.prices.prices[0].last_updated)
-                lastUpdated.setHours(0,0,0,0)
-                return lastUpdated >= this.filterDate
-              })
+            this.results = this.resultsOG
+            // .filter(x => {
+            //     var lastUpdated = new Date(x.prices.prices[0].last_updated)
+            //     lastUpdated.setHours(0,0,0,0)
+            //     return lastUpdated >= this.filterDate
+            //   })
         },
 
         // addUsername() {
