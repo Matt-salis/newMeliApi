@@ -1,0 +1,1 @@
+.flex-inline{display:flex;justify-content:space-around;gap:10px}.flex-inline-between{display:flex;justify-content:space-between;gap:10px}.flex-inline-left{display:flex;justify-content:left;gap:10px}.gap{display:flex;gap:5px}.border{border:1px solid black;border-radius:5px;padding-inline:1rem}.mt-10{margin-top:10px}.table-responsive{max-height:450px}
