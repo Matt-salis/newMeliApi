@@ -34,7 +34,7 @@ class tokenService {
         var urlparams = new URLSearchParams(querystr)
         var code = urlparams.get('code')
         if (code == null) {
-          return window.location.replace('https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=3301773768813163&redirect_uri=https://meliapp.netlify.app/')
+          return window.location.replace('https://auth.mercadolibre.com.ar/authorization?response_type=code&client_id=3301773768813163&redirect_uri=https://matt-salis.github.io/meliAPP/')
         } else {
           this.code = code
           return this.createToken()
@@ -52,8 +52,7 @@ class tokenService {
           'client_id': import.meta.env.VITE_CLIENTID,
           'client_secret': import.meta.env.VITE_CLIENTSECRET,
           'code': this.code,
-          //'redirect_uri': 'https://matt-salis.github.io/meliAPP/'
-          'redirect_uri': 'https://meliapp.netlify.app/'
+          'redirect_uri': 'https://matt-salis.github.io/meliAPP/'
           }
         }).then((res) => {
           var token = res.access_token
