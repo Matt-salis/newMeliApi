@@ -23,6 +23,11 @@ const router = createRouter({
       component: () => import('../views/busqueda-usuarios.vue')
     },
     {
+      path: '/cambios-precios',
+      name: 'cambios-precios',
+      component: () => import('../views/cambios-precios.vue')
+    },
+    {
       path: '/competencia',
       name: 'competencia',
       component: () => import('../views/competencia.vue')

@@ -61,8 +61,8 @@
                 <th>img de portada</th>
                 <th>titulo</th>
                 <th>link de la publicacion</th>
-                <th>link del vendedor</th>
-                <th>nombre del Eshop</th>
+                <!-- <th>link del vendedor</th> -->
+                <th>nombre del vendedor</th>
                 <th>condicion</th>
                 <th>precio</th>
                 <th>cantidad disponible</th>
@@ -77,8 +77,8 @@
               <td><img style="max-width: 100px; max-height: 100px;" :src='result.thumbnail' alt="logo"></td>
               <td>{{result.title}}</td>
               <td><a :href='result.permalink'>{{result.permalink}}</a></td>
-              <td><a :href='result.seller.permalink'>{{result.seller.permalink}}</a></td>
-              <td>{{result.seller.eshop != null ? result.seller.eshop.nick_name : "-"}}</td>
+              <!-- <td><a :href='result.seller.permalink'>{{result.seller.permalink}}</a></td> -->
+              <td>{{result.seller.nickname != null ? result.seller.nickname : "-"}}</td>
               <td>{{result.condition}}</td>
               <td>{{result.price}}</td>
               <td>{{result.available_quantity}}</td>

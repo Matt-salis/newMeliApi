@@ -8,6 +8,8 @@
       <RouterLink class="nodeco" to="/busqueda-usuarios">Busqueda de Usuarios</RouterLink>
       <a>|</a>
       <RouterLink class="nodeco" to="/competencia">Competencia</RouterLink>
+      <a>|</a>
+      <RouterLink class="nodeco" to="/cambios-precios">Cambios de precio</RouterLink>
       <!-- <p style="position: absolute; right: 30px;">{{nickname}}</p> -->
     </nav>
 </template>

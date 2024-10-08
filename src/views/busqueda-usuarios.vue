@@ -41,7 +41,27 @@
 
 
 
-      <div v-if="results.seller != null" class="flex-inline-between mt-10">
+      <div v-if="seller.id" class="flex-inline-between mt-10">
+        <div class="border">
+          <p style="font-size: large;">Zona:</p>
+          <p>{{seller.address.city}}</p>
+        </div>
+        <div class="border">
+          <p style="font-size: large;">Reputacion:</p>
+          <p>{{seller.seller_reputation.level_id}}</p>
+        </div>
+        <div class="border">
+          <p style="font-size: large;">Status:</p>
+          <p>{{seller.seller_reputation.power_seller_status}}</p>
+        </div>
+        <div class="border">
+          <p style="font-size: large;">Cantidad de ventas historico:</p>
+          <p>{{seller.seller_reputation.transactions.total}}</p>
+        </div>
+        <div class="border">
+          <p style="font-size: large;">Link del usuario:</p>
+          <a :href="seller.permalink" target="_blank">{{seller.permalink}}</a>
+        </div>
         <!-- <div class="border">
           <p style="font-size: large;">Transacciones canceladas</p>
           <p>{{results.seller.seller_reputation.transactions.canceled}}</p>
@@ -111,6 +131,7 @@
 </template>
 <script>
 import { defineComponent } from 'vue'
+import errorsService from '../service/errorsService';
 
 export default defineComponent({
   data() {
@@ -120,7 +141,8 @@ export default defineComponent({
     code: '',
     results: {},
     resultsOG: {},
-    prodTable: []
+    prodTable: [],
+    seller: {}
     }
   },
   mounted() {
@@ -146,6 +168,7 @@ export default defineComponent({
             this.results = res
             this.resultsOG = this.results
             if (this.results.seller != null) {
+              this.buscarUserId(this.results.seller.id)
               this.results.seller.registration_date = this.formatFecha(new Date(this.results.seller.registration_date))
               this.prodTable = res.results
             } else {
@@ -155,6 +178,19 @@ export default defineComponent({
             errorsService.handleError(err)
           }) 
         
+      },
+      buscarUserId(id) {
+        console.log(id)
+        var token = window.localStorage.getItem('token')
+        $.ajax({
+            type: "GET",
+            url: "https://api.mercadolibre.com/users/" + id,
+            authorization: "Bearer " + token,
+          }).then((res) => {
+            this.seller = res
+          }).catch((err) => {
+            errorsService.handleError(err)
+          }) 
       },
       formatFecha(date) {
         const fecha =

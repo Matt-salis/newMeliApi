@@ -343,19 +343,19 @@
         // },
 
         formatTable() {
-        this.results.forEach(x => {
-          var json = {
-            titulo: x.title,
-            linkpubli: x.permalink,
-            lastupdate: this.formatFecha( new Date(x.prices.prices[0].last_updated)),
-            nombreeshop: x.seller.nickname,
-            precio: x.price,
-            disponibles: x.available_quantity,
-            vendidos: x.sold_quantity,
-            cuotas: x.installments != null ? x.installments.quantity : '-',
-            intereses: x.installments.rate != null ? x.installments.rate : '-',
-            envio: x.shipping.free_shipping
-          }
+          this.results.forEach(x => {
+            var json = {
+              titulo: x.title || '',
+              linkpubli: x.permalink || '',
+              lastupdate: x.prices?.prices?.[0]?.last_updated ? this.formatFecha(new Date(x.prices.prices[0].last_updated)) : '',
+              nombreeshop: x.seller?.nickname || '',
+              precio: x.price || '',
+              disponibles: x.available_quantity || '',
+              vendidos: x.sold_quantity || '',
+              cuotas: x.installments?.quantity || '-',
+              intereses: x.installments?.rate || '-',
+              envio: x.shipping?.free_shipping || ''
+            }
             this.tablaFormateada.push(json)
           });
         },

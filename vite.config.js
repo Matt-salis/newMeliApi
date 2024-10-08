@@ -14,5 +14,6 @@ export default defineConfig({
 
   server: {
     port: 8090,
-  }
+  },
+  base: '/meliAPP/',
 })
