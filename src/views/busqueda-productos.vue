@@ -52,6 +52,7 @@
       </div>
       <div class="flex-inline-between" style="margin-top: 15px; margin-bottom: 5px;">
         <p v-if="results.length > 0">Cantidad: {{results.length}}</p>
+        <p v-if="itmPrice">Precio propio: ${{ itmPrice }}</p>
         <button v-if="results.length > 0" @click="exportXlsx()" class="btn btn-outline-success">Exportar</button>
       </div>
       <div class="table-responsive" v-if="results.length > 0" style="margin-top: 20px;">
@@ -60,32 +61,34 @@
             <tr>
                 <th>img de portada</th>
                 <th>titulo</th>
-                <th>link de la publicacion</th>
-                <!-- <th>link del vendedor</th> -->
-                <th>nombre del vendedor</th>
-                <th>condicion</th>
-                <th>precio</th>
+                <th><p class="cursor-pointer" @click="ordenPorPrecios()">precio</p></th>
                 <th>cantidad disponible</th>
                 <th>cantidad vendidos</th>
                 <th>cuotas</th>
                 <th>interes</th>
                 <th>envio gratis</th>
+                <th>modo de envio</th>
+                <th>link de la publicacion</th>
+                <!-- <th>link del vendedor</th> -->
+                <th>nombre del vendedor</th>
+                <th>condicion</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="(result, key) in results" :key="key">
               <td><img style="max-width: 100px; max-height: 100px;" :src='result.thumbnail' alt="logo"></td>
               <td>{{result.title}}</td>
-              <td><a :href='result.permalink'>{{result.permalink}}</a></td>
-              <!-- <td><a :href='result.seller.permalink'>{{result.seller.permalink}}</a></td> -->
-              <td>{{result.seller.nickname != null ? result.seller.nickname : "-"}}</td>
-              <td>{{result.condition}}</td>
               <td>{{result.price}}</td>
               <td>{{result.available_quantity}}</td>
               <td>{{result.sold_quantity}}</td>
               <td>{{result.installments != null ? result.installments.quantity : '-' }}</td>
               <td>%{{result.installments != null ? result.installments.rate : '-' }}</td>
               <td>{{result.shipping.free_shipping}}</td>
+              <td>{{result.shipping.mode}}</td>
+              <td><a :href='result.permalink'>{{result.permalink}}</a></td>
+              <!-- <td><a :href='result.seller.permalink'>{{result.seller.permalink}}</a></td> -->
+              <td>{{result.seller.nickname != null ? result.seller.nickname : "-"}}</td>
+              <td>{{result.condition}}</td>
             </tr>
           </tbody>
         </table>
@@ -116,7 +119,10 @@ export default defineComponent({
     filtroEstado: '2230284',
     filtraEstado: false,
     filtroEnvios: 'free',
-    filtraEnvios: false
+    filtraEnvios: false,
+    ordenPrecios: true,
+    itmPrice: '',
+    keyword: ''
     }
   },
   mounted() {
@@ -124,8 +130,23 @@ export default defineComponent({
     if (token == null) {
       this.checkParam()
     }
+    this.checkParam()
   },
   methods: {
+      checkParam() {
+        console.log('checkparam')
+        this.$nextTick(() => {
+          console.log('checkparam 2')
+          const urlParams = new URLSearchParams(window.location.search);
+          this.keyword = urlParams.get('key');
+          this.itmPrice = urlParams.get('price');
+
+          if (this.keyword) {
+            this.queryBusqueda = this.keyword;
+            this.buscarQuery();
+          }
+        });
+      },
       queryFiltros() {
         var query = ''
         if (this.filtraCuotas) {
@@ -139,58 +160,47 @@ export default defineComponent({
         }
         return query;
       },
+      ordenPorPrecios() {
+        if (this.ordenPrecios) {
+          this.results = this.results.sort((a, b) => b.price - a.price);
+        } else {
+          this.results = this.results.sort((a, b) => a.price - b.price);
+        }
+        this.ordenPrecios = !this.ordenPrecios;
+      },
       buscarQuery() {
-        // var filtros = "&item_condition=2230284";
         var filtros = this.queryFiltros();
-        this.tablaFormateada = []
-        var token = window.localStorage.getItem('token')
-        this.queryBusquedaOG = this.queryBusqueda
-        var query = this.queryBusqueda.replaceAll(' ', '%20')
-        $.ajax({
-          type: "GET",
-          url: "https://api.mercadolibre.com/sites/MLA/search?q=" + query + filtros,
-          authorization: "Bearer " + token,
-        }).then((res) => {
-          var total = res.paging.total
-          var max = Math.ceil(total / 50) - 1 
-          // if (max >= 20) {
-          //   max = 19
-          // }
-          this.results = res.results
-          this.resultsOG = this.results
+        this.tablaFormateada = [];
+        var token = window.localStorage.getItem('token');
+        this.queryBusquedaOG = this.queryBusqueda;
+        var query = this.queryBusqueda.replaceAll(' ', '%20');
+        var offset = 0;
+        this.results = []
+        var self = this
 
-          var u = 1
-          for (var i = 1; i <= max; i++) {
-            $.ajax({
-              type: "GET",
-              url: "https://api.mercadolibre.com/sites/MLA/search?q=" + query + filtros + "&offset=" + (i * 50),
-              authorization: "Bearer " + token,
-            }).then((ans) => {
-              this.results.push(...ans.results)
-              this.resultsOG = this.results
-              // if (this.results.length == total || this.results.length == 1000) {
-              //   this.formatTable()
-              // }
-            }).catch((err) => {
-              if (err.response.error == "invalid_grant") {
-                tokenService.checkParam()
-              }
-              if (err.response.message == "Invalid token") {
-                tokenService.refreshToken()
-              }
-              console.log(err)
-            })
-          }
+        function fetchResults() {
+          $.ajax({
+            type: "GET",
+            url: "https://api.mercadolibre.com/sites/MLA/search?q=" + query + filtros + "&offset=" + offset,
+            authorization: "Bearer " + token,
+          }).then((res) => {
+            self.results.push(...res.results)
+            if (res.results.length > 0 && offset < 1000) {
+              offset += 50;
+              fetchResults();
+            }
+          }).catch((err) => {
+            if (err.response.error == "invalid_grant") {
+              tokenService.checkParam();
+            }
+            if (err.response.message == "Invalid token") {
+              tokenService.refreshToken();
+            }
+            console.log(err);
+          });
+        }
 
-        }).catch((err) => {
-          if (err.response.error == "invalid_grant") {
-            tokenService.checkParam()
-          }
-          if (err.response.message == "Invalid token") {
-            tokenService.refreshToken()
-          }
-          console.log(err)
-        })
+        fetchResults();
       },
       formatTable() {
         this.results.forEach(x => {

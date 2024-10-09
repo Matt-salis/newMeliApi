@@ -31,7 +31,7 @@
                 <th>img de portada</th>
                 <th>titulo</th>
                 <th>link de la publicacion</th>
-                <th>fecha de modificacion</th>
+                <!-- <th>fecha de modificacion</th> -->
                 <th>nombre del usuario</th>
                 <th>precio</th>
                 <th>cantidad disponible</th>

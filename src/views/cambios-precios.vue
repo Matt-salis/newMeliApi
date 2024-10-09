@@ -87,6 +87,7 @@
   
         <div v-if="changedProducts.length > 0" class="mt-5">
           <h4 class="text-lg font-semibold">Productos con cambios de precio: {{ changedProducts.length }}</h4>
+          <button :disabled="loading" @click="exportXlsx()" class="btn btn-outline-success">Exportar</button>
           <div class="overflow-scroll" style="height: 50vh;">
             <ul>
               <li v-for="product in changedProducts" :key="product.id" class="border p-2">
@@ -140,10 +141,38 @@ import { db, doc, getDoc, getDocs, collection, setDoc, updateDoc, arrayUnion } f
         noChangesMessage: '',
         changedProducts: [],
         searchQuery: '', // Nueva variable para almacenar la búsqueda
-        searchResults: [] // Nueva variable para almacenar resultados de búsqueda
+        searchResults: [],
+        tablaFormateada: [] // Nueva variable para almacenar resultados de búsqueda
       };
     },
     methods: {
+      formatTable() {
+        this.tablaFormateada = []
+        this.changedProducts.forEach(x => {
+          var json = {
+            producto: x.name,
+            link: x.link,
+            vendedor: x.sellerName,
+            precioViejo: x.firebasePrice,
+            precioNuevo: x.currentPrice,
+            fecha: this.formatFecha(x.lastUpdated)
+          }
+          if (x.installments == null) {
+            console.log(x)
+          }
+          this.tablaFormateada.push(json)
+        });
+      },
+      exportXlsx() {
+        this.formatTable()
+        var worksheet = XLSX.utils.json_to_sheet(this.tablaFormateada)
+        const workbook = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(workbook, worksheet, "Publicaciones");
+        XLSX.utils.sheet_add_aoa(worksheet, [[ "Producto", "link de la publicacion", "Vendedor", "Precio anterior", "Precio Actual", "Fecha del ultimo precio" ]], { origin: "A1" });
+        // const max_width = this.tablaFormateada.reduce((w, r) => Math.max(w, r.name.length), 10);
+        // worksheet["!cols"] = [ { wch: max_width } ];
+        XLSX.writeFile(workbook, "competencia.xlsx", { compression: true });
+      },
         formatFecha(f) {
           const date = new Date(f);
 
@@ -151,7 +180,7 @@ import { db, doc, getDoc, getDocs, collection, setDoc, updateDoc, arrayUnion } f
           const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are zero-indexed
           const year = date.getFullYear();
 
-          const formattedDate = `${day}/${month}/${year}`;
+          const formattedDate = `${month}/${day}/${year}`;
 
           return formattedDate
         },
