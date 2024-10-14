@@ -61,7 +61,7 @@
             <tr>
                 <th>img de portada</th>
                 <th>titulo</th>
-                <th><p class="cursor-pointer" @click="ordenPorPrecios()">precio</p></th>
+                <th style="cursor: pointer;"><p @click="ordenPorPrecios()">precio {{ ordenPrecios ? '↑' : '↓' }}</p></th>
                 <th>cantidad disponible</th>
                 <th>cantidad vendidos</th>
                 <th>cuotas</th>
@@ -77,7 +77,7 @@
           <tbody>
             <tr v-for="(result, key) in results" :key="key">
               <td><img style="max-width: 100px; max-height: 100px;" :src='result.thumbnail' alt="logo"></td>
-              <td>{{result.title}}</td>
+              <td v-html="highlightMatches(result.title, queryBusqueda)"></td>
               <td>{{result.price}}</td>
               <td>{{result.available_quantity}}</td>
               <td>{{result.sold_quantity}}</td>
@@ -133,6 +133,10 @@ export default defineComponent({
     this.checkParam()
   },
   methods: {
+      highlightMatches(title, query) {
+        const regex = new RegExp(query, 'gi');
+        return title.replace(regex, (match) => `<span class="highlight">${match}</span>`);
+      },
       checkParam() {
         console.log('checkparam')
         this.$nextTick(() => {
@@ -264,5 +268,10 @@ export default defineComponent({
 
 .table-responsive {
     max-height: 500px;
+}
+
+.highlight {
+  background-color: yellow;
+  font-weight: bold;
 }
 </style>
