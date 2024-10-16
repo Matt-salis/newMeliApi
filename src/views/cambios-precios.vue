@@ -36,7 +36,7 @@
   
       <div class="mt-5" v-if="!selectedCompetitor && !loading">
         <h2 class="text-xl">Competidores:</h2>
-        <div class="grid grid-cols-2 gap-4">
+        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
           <div v-for="competitor in competitors"
           :key="competitor.id" class="flex my-1 mx-2">
               <button
@@ -84,7 +84,10 @@
   
         <div v-if="changedProducts.length > 0" class="mt-5" style="width: full;">
           <h4 class="text-lg font-semibold">Productos con cambios de precio: {{ changedProducts.length }}</h4>
-          <button :disabled="loading" @click="exportXlsx()" class="btn btn-outline-success">Exportar</button>
+          <div style="display: flex; gap: 15px; justify-content: center;">
+            <button :disabled="loading" @click="exportXlsx()" class="btn btn-outline-success">Exportar</button>
+            <button :disabled="loading" @click="updateChangedProducts()" class="btn btn-outline-success">Guardar cambios de precio</button>
+          </div>
           <table class="table table-striped table-bordered">
             <thead>
               <tr>
@@ -114,16 +117,26 @@
         </div>
   
         <!-- Botón para ver cambios de precio de todos los competidores -->
-        <div v-if="!selectedCompetitor" class="mt-5 flex gap-2">
+        <div v-if="!selectedCompetitor" class="mt-5 flex gap-2" style="margin-bottom: 10px;">
           <button :disabled="loading"
             class="btn btn-outline-primary btn-sm bg-yellow-500 py-2 px-4 rounded hover:bg-yellow-600 mx-2" 
             @click="fetchAllCompetitorsRecentChanges"
           >
             Ver cambios de precio de todos los competidores
           </button>
-          <button :disabled="loading" class="btn btn-outline-primary btn-sm bg-blue-500 py-2 px-4 rounded hover:bg-blue-600" @click="changeAllPriceDifferences">
+          
+          
+          <!-- <button :disabled="loading" class="btn btn-outline-primary btn-sm bg-blue-500 py-2 px-4 rounded hover:bg-blue-600" @click="changeAllPriceDifferences">
             Actualizar precios en todos los competidores
-            </button>
+            </button> -->
+
+
+            <!-- <div>
+              <input type="number" v-model="ndays" min="1" max="10">
+              <button :disabled="loading" class="btn btn-outline-primary btn-sm bg-blue-500 py-2 px-4 rounded hover:bg-blue-600" @click="getRecentDayChanges">
+                buscar cambios en {{ ndays }}
+              </button>
+            </div> -->
         </div>
 
 
@@ -158,6 +171,7 @@
               <p>{{ formatFecha(historia.priceDate) }}</p>
             </div>
           </div>
+          <canvas id="priceChart"></canvas>
           <button class="btn btn-outline-danger btn-sm" @click="cerrarHistorial">Cerrar</button>
         </dialog>
         
@@ -166,7 +180,9 @@
   </template>
   
   <script>
-  
+  import { Chart, CategoryScale, LinearScale, LineController, LineElement, PointElement  } from 'chart.js';
+  import moment from 'moment';
+
   export default {
     data() {
       return {
@@ -181,10 +197,80 @@
         tablaFormateada: [], // Nueva variable para almacenar resultados de búsqueda
         userId: '',
         historial: [],
-        productoHistorial: ''
+        productoHistorial: '',
+        cantidadBuscada: 0,
+        priceChart: null,
+        ndays: 1
       };
     },
     methods: {
+      async createChart() {
+          Chart.register(
+              LineController, // Register Line Controller
+              LineElement, // Register Line Element
+              CategoryScale, // Register Category Scale for X-axis
+              LinearScale,
+              PointElement
+          );
+          if (this.priceChart) {
+            this.priceChart.destroy();
+          }
+          let data = this.historial;
+
+          data.sort((a, b) => new Date(a.priceDate) - new Date(b.priceDate))
+          
+          const labels = data.map(entry => this.formatFecha(entry.priceDate)); // Extract dates
+          const prices = data.map(entry => entry.price); // Extract prices
+
+          const ctx = document.getElementById('priceChart').getContext('2d');
+          this.priceChart = new Chart(ctx, {
+              type: 'line',
+              data: {
+                  labels: labels,
+                  datasets: [{
+                      label: 'Price History',
+                      data: prices,
+                      borderColor: 'rgba(75, 192, 192, 1)',
+                      fill: false,
+                      tension: 0.1,
+                  }],
+              },
+              options: {
+                  scales: {
+                      x: {
+                          title: {
+                              display: true,
+                              text: 'Fecha',
+                          },
+                      },
+                      y: {
+                          title: {
+                              display: true,
+                              text: 'Precio',
+                          },
+                          beginAtZero: false,
+                      },
+                  },
+                  plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+              },
+          });
+      },
       abrirInstrucciones() {
         document.getElementById('instrucciones').showModal();
       },
@@ -222,19 +308,20 @@
         XLSX.writeFile(workbook, "competencia.xlsx", { compression: true });
       },
       formatFecha(f) {
-        const date = new Date(f);
-
-        const day = String(date.getUTCDate()).padStart(2, '0');
-        const month = String(date.getUTCMonth() + 1).padStart(2, '0'); // Months are zero-indexed
-        const year = date.getFullYear();
-        const hours = String(date.getHours()).padStart(2, '0');
-        const minutes = String(date.getMinutes()).padStart(2, '0');
-        const seconds = String(date.getSeconds()).padStart(2, '0');
-
-
-        const formattedDate = `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-
-        return formattedDate;
+        if (f) {
+          let date;
+          if (moment(f, "DD/MM/YYYY HH:mm:ss", true).isValid()) {
+            date = moment(f, "DD/MM/YYYY HH:mm:ss");
+          } else if (moment(f, moment.ISO_8601, true).isValid()) {
+            date = moment(f);
+          } else {
+            console.error("Invalid date format");
+            return null;
+          }
+          return date.format("DD/MM/YYYY HH:mm:ss");
+        } else {
+          return moment().format("DD/MM/YYYY HH:mm:ss");
+        }
       },
       selectCompetitor(competitor) {
         this.selectedCompetitor = { id: competitor.id, name: competitor.name };
@@ -336,12 +423,59 @@
         if (this.historial.length) {
           this.updateMessage = ''
           this.productoHistorial = product.name
+          var actual = {
+            price: product.currentPrice,
+            datePrice: '', 
+          }
+          this.historial.push(actual)
+          this.createChart()
           document.getElementById('historial').showModal();
         } else {
           this.updateMessage = 'No hay historial de registro de este item'
         }
         this.loading = false
       },
+      async updateChangedProducts() {
+        this.loading = true; // Show loading indicator
+        this.updateMessage = ''; // Clear previous messages
+
+        try {
+          // Iterate through changedProducts and update each one in the database
+          for (const product of this.changedProducts) {
+            const response = await fetch(`${this.backend}/api/${this.userId}/competitors/${product.sellerId}/publications/${product.id}`, {
+              method: 'PUT', // Use PUT to update existing records
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                name: product.name,
+                price: product.currentPrice,
+              }),
+            });
+
+            if (!response.ok) {
+              throw new Error(`Error updating product ${product.name}: ${response.statusText}`);
+            }
+          }
+
+          this.updateMessage = 'Publicaciones actualizadas correctamente.';
+        } catch (error) {
+          console.error('Error updating changed products:', error);
+          this.updateMessage = 'Hubo un error al actualizar las publicaciones.';
+        } finally {
+          this.changedProducts = []
+          this.loading = false; // Hide loading indicator
+        }
+      },
+      // async getRecentDayChanges() {
+      //   if (this.ndays < 1 || this.ndays > 10) {
+      //     this.ndays = 1
+      //   }
+      //   this.loading = true
+      //   const response = await fetch(`${this.backend}/api/${this.userId}/publications/changes/${this.ndays}`)
+      //   this.changedProducts = response
+      //   this.loading = false
+      // },
 
       // Busca los cambios de un competidor particular
       async fetchRecentChanges() {
@@ -367,10 +501,11 @@
               console.log(publication)
               let product = {
                 id: publication.id,
+                sellerId: publication.sellerId,
                 link: publication.link,
                 sellerName: publication.seller,
                 imageUrl: publication.imageUrl,
-                sellerName: publication.seller,
+                sellerName: publication.sellerName,
                 name: publication.name,
                 firebasePrice: storedPublication.price,
                 currentPrice: price,
@@ -409,7 +544,8 @@
                 price: item.price,
                 imageUrl: item.thumbnail,
                 link: item.permalink,
-                seller: data.seller.nickname
+                sellerName: data.seller.nickname,
+                sellerId: data.seller.id
               });
             });
 
@@ -466,8 +602,8 @@
       async changeAllPriceDifferences() {
         this.loading = true;
         this.updateMessage = '';
-        this.updateMessage = '';
-        let allChangedProducts = 0;
+        this.changedProducts = []
+        this.cantidadBuscada = 0;
 
         try {
           // Fetch all competitors from the backend
@@ -476,29 +612,9 @@
           for (const competitor of competitors) {
             // Fetch stored publications from the backend
             const storedPublications = await fetch(`${this.backend}/api/${this.userId}/competitors/${competitor.id}/publications`).then(res => res.json()); // Replace Firebase nested collection call
-            
             // Fetch current publications from MELI API
-            const currentPublications = await this.fetchPublications(competitor.id);
-
-            let changedProducts = 0;
-
+            const currentPublications = await this.fetchPublications(competitor.id)
             currentPublications.forEach(async publication => {
-              const storedPublication = storedPublications.find(p => p.id === publication.id);
-
-              // if (storedPublication) {
-              //   if (storedPublication.price !== publication.price) {
-              //     // Update publication via the backend API
-              //     await fetch(`${this.backend}/api/${this.userId}/competitors/${competitor.id}/publications/${publication.id}`, {
-              //       method: 'PUT',
-              //       headers: {
-              //         'Content-Type': 'application/json',
-              //       },
-              //       body: JSON.stringify({ price: publication.price, lastUpdated: new Date() })
-              //     }); // Replace Firebase updateDoc
-
-              //     changedProducts++
-              //   }
-              // } else {
                 // Add new publication via the backend API
                 await fetch(`${this.backend}/api/${this.userId}/competitors/${competitor.id}/publications`, {
                   method: 'POST',
@@ -513,24 +629,24 @@
                   })
                 }); // Replace Firebase setDoc
 
-                changedProducts++
               // }
             });
+            this.cantidadBuscada++
 
-              allChangedProducts += changedProducts;
           }
-          this.updateMessage = allChangedProducts.length > 0 ? (allChangedProducts + ' Precios actualizados correctamente') : '';
-        } catch (error) {
+        } catch(err) {
           console.error('Error updating prices for all competitors:', error);
           this.updateMessage = 'Error al actualizar los precios';
-        } finally {
-          this.loading = false;
+        }
+        finally {
+          this.loading = false
         }
       },
       // Busca todos los precios cambiados de todos los competidores del usuario
       async fetchAllCompetitorsRecentChanges() {
         this.loading = true;
         this.updateMessage = ''
+        this.cantidadBuscada = 0
         // Fetch recent price changes for all competitors via the backend API
         this.changedProducts = []
         
@@ -539,40 +655,51 @@
           const storedPublications = await fetch(`${this.backend}/api/${this.userId}/competitors/${competitor.id}/publications`).then(res => res.json()); // Replace Firebase nested collection call
           
           // Fetch current publications from MELI API
-          const currentPublications = await this.fetchPublications(competitor.id);
+          this.fetchPublications(competitor.id)
+            .then((data) => {
+              const currentPublications = data
+              currentPublications.forEach(async publication => {
+                const storedPublication = storedPublications.find(p => p.id === publication.id);
 
-          currentPublications.forEach(async publication => {
-            const storedPublication = storedPublications.find(p => p.id === publication.id);
-
-            if (storedPublication) {
-              let price = publication.price;
-              if (typeof storedPublication === 'string') {
-                storedPublication = parseFloat(price); // Convert string to number if needed
-              }
-              // Compare prices, considering possible floating point precision issues
-              const EPSILON = 0.01; // Tolerance for price comparison
-              if (Math.abs(storedPublication.price - price) > EPSILON) {
-                console.log(publication)
-                let product = {
-                  id: publication.id,
-                  link: publication.link,
-                  sellerName: publication.seller,
-                  imageUrl: publication.imageUrl,
-                  sellerName: publication.seller,
-                  name: publication.name,
-                  firebasePrice: storedPublication.price,
-                  currentPrice: price,
-                  lastUpdated: this.formatFecha(storedPublication.lastUpdate)
-                }
-                this.changedProducts.push(product)
-              }
-            } 
-          })
+                if (storedPublication) {
+                  let price = publication.price;
+                  if (typeof storedPublication === 'string') {
+                    storedPublication = parseFloat(price); // Convert string to number if needed
+                  }
+                  // Compare prices, considering possible floating point precision issues
+                  const EPSILON = 0.01; // Tolerance for price comparison
+                  if (Math.abs(storedPublication.price - price) > EPSILON) {
+                    console.log(publication)
+                    let product = {
+                      id: publication.id,
+                      link: publication.link,
+                      imageUrl: publication.imageUrl,
+                      sellerName: publication.sellerName,
+                      sellerId: publication.sellerId,
+                      name: publication.name,
+                      firebasePrice: storedPublication.price,
+                      currentPrice: price,
+                      lastUpdated: this.formatFecha(storedPublication.lastUpdate)
+                    }
+                    this.changedProducts.push(product)
+                  }
+                } 
+              })
+            }).finally(() => {
+              this.terminarCargando()
+            })
         }
-        if (!this.changedProducts.length) {
-          this.updateMessage = 'No se encontraron cambios de precios'
+      },
+      terminarCargando(num) {
+        this.cantidadBuscada++ 
+        if (this.cantidadBuscada == this.competitors.length) {
+          if (!this.changedProducts.length && num == null) {
+            this.updateMessage = 'No se encontraron cambios de precios'
+          } else if (num == 1) {
+            this.updateMessage = 'Se actualizaron todos los precios'
+          }
+          this.loading = false;
         }
-        this.loading = false;
       }
     },
       
